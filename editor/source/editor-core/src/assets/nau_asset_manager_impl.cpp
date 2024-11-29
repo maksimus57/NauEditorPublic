@@ -38,10 +38,6 @@ void NauAssetManager::initialize(const NauProject& project)
 
 void NauAssetManager::importAsset(const std::string& sourcePath)
 {
-    if (sourcePath.empty()) {
-        return;
-    }
-    
     m_assetProcessor->importAsset(m_projectPath, sourcePath);
 }
 

@@ -202,7 +202,11 @@ void NauUsdSceneSynchronizer::startSyncFromEditorSceneInternal(pxr::UsdStageRefP
 
         // Create camera
         auto& cameraManager = nau::getServiceProvider().get<nau::scene::ICameraManager>();
+
+        // Create detached camera in default world
         auto cameraControl = cameraManager.createDetachedCamera();
+        cameraManager.setMainCamera(cameraControl->getCameraUid());
+
         // Set initial camera params
         // Will be overwritten from user settings
         cameraControl->setClipNearPlane(0.1);
@@ -210,7 +214,7 @@ void NauUsdSceneSynchronizer::startSyncFromEditorSceneInternal(pxr::UsdStageRefP
         cameraControl->setFov(90);
         cameraControl->setCameraName(NauEditorCameraManager::MainCameraName);
             
-        // Set active camera to camera manager 
+        // Set active camera to editor camera manager 
         Nau::EditorEngine().cameraManager()->setActiveCamera(cameraControl);
 
         auto& sceneManager = nau::getServiceProvider().get<nau::scene::ISceneManager>();
@@ -231,6 +235,9 @@ void NauUsdSceneSynchronizer::stopSyncFromEditorSceneInternal()
 
     nau::getServiceProvider().get<nau::scene::ISceneManager>().deactivateScene(m_engineCurrentScene);
     m_engineCurrentScene = nullptr;
+
+    auto& cameraManager = nau::getServiceProvider().get<nau::scene::ICameraManager>();
+    cameraManager.resetWorldMainCamera();
 
     m_syncMode = SyncMode::None;
 }

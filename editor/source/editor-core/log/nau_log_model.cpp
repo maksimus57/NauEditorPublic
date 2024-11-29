@@ -30,7 +30,11 @@ void NauLogModel::addEntry(int64_t time, NauEngineLogLevel level,
 
     endInsertRows();
 
+#ifdef NDEBUG
+    if (level == NauEngineLogLevel::Critical) {
+#else
     if ((level == NauEngineLogLevel::Error) || (level == NauEngineLogLevel::Critical)) {
+#endif
         emit eventCriticalEventOccurred();
     }
 }

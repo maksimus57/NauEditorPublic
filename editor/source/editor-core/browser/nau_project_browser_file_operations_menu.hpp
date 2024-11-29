@@ -14,6 +14,8 @@
 #include <QModelIndexList>
 #include <QHash>
 
+class NauAddContentMenu;
+
 
 // ** NauProjectBrowserFileOperationsMenu
 
@@ -29,9 +31,9 @@ public:
     // Adds actions to the view, if shortcut specified.
     void watch(QAbstractItemView* view);
 
-    // Returns a relevant list of QActions depending of the state of specified view.
+    // Fills specified menu with a relevant list of QActions depending of the state of specified view.
     // UB if view is unknown, i.e. was not added via watch(...).
-    QList<QAction*> enumerateActionsFor(QAbstractItemView* view);
+    void enumerateActionsFor(QAbstractItemView* view, NauMenu& menu);
 
     // Force to update internal data for the specified view.
     void updateViewSelectionData(QAbstractItemView* view);
@@ -55,6 +57,7 @@ private:
 
 private:
     NauShortcutHub* const m_shortcutHub;
+    QPointer<NauAddContentMenu> m_addContentMenu;
 
     struct ViewData
     {

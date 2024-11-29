@@ -8,6 +8,7 @@
 
 #include <pxr/usd/usd/stage.h>
 #include <pxr/usd/usd/prim.h>
+#include <pxr/usd/usd/attribute.h>
 #include <pxr/base/tf/token.h>
 #include "nau/assets/asset_db.h"
 #include "nau/shared/file_system.h"
@@ -75,6 +76,9 @@ void NauAudioEditor::createAsset(const std::string& assetPath)
         auto stage = PXR_NS::UsdStage::CreateInMemory(assetPath);
         auto prim = stage->DefinePrim(PXR_NS::SdfPath("/AudioContainer"), PXR_NS::TfToken("AudioContainer"));
         stage->SetDefaultPrim(prim);
+        auto attrType = pxr::SdfValueTypeNames->Token;
+        auto attr = prim.CreateAttribute(pxr::TfToken("containerKind"), attrType);
+        attr.Set(pxr::VtValue(pxr::TfToken("Sequence")));
         stage->GetRootLayer()->Export(assetPath);
         loadContainer(assetPath);
     }

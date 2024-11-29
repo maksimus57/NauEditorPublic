@@ -49,7 +49,7 @@ class NAU_EDITOR_API NauInspectorPageHeader : public NauWidget
     Q_OBJECT
 
 public:
-    NauInspectorPageHeader(const std::string& title, const std::string& subtitle);
+    NauInspectorPageHeader(const std::string& title, const std::string& subtitle, bool hideAddButton);
 
     void changeIcon(const std::string& resource);
     void changeTitle(const std::string& title);
@@ -79,7 +79,7 @@ class NAU_EDITOR_API NauInspectorPage : public NauWidget
 public:
     NauInspectorPage(NauWidget* parent);
 
-    NauInspectorPageHeader* addHeader(const std::string& objectName, const std::string& objectKind);
+    NauInspectorPageHeader* addHeader(const std::string& objectName, const std::string& objectKind, bool hideAddButton);
     void addSpoiler(NauComponentSpoiler* spoiler);
 
     NauComponentSpoiler* addComponent(const std::string& componentName);

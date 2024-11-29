@@ -10,6 +10,7 @@
 #include "baseWidgets/nau_widget.hpp"
 #include "baseWidgets/nau_label.hpp"
 #include "scene/nau_world.hpp"
+#include "nau_action.hpp"
 
 
 // ** NauTabsType
@@ -236,7 +237,9 @@ class NAU_EDITOR_API NauObjectCreationList : public NauMenu
 public:
     explicit NauObjectCreationList(NauWidget* parent = nullptr);
 
-    void initTypesList(const std::vector<std::string>& types);
+    void initTypesList(const std::map<std::string, std::string>& types);
+
+    void updateTypeList(const std::string& typeName, bool state);
 
 signals:
     void eventCreateObject(const std::string& typeName);
@@ -246,5 +249,6 @@ private:
     void createObject(const std::string& path);
 
 private:
-    std::vector<std::string> m_typesList;
+    std::map<std::string, std::string> m_typesList;
+    std::unordered_map<std::string, NauAction*> m_actionMap;
 };

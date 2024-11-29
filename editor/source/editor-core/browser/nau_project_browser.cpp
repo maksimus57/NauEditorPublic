@@ -729,7 +729,7 @@ NauWidget* NauProjectBrowser::createAddContentContainer()
     // Import button
     auto importButton = new NauTertiaryButton(this);
     importButton->setObjectName("ImportButton");
-    importButton->setIcon(Nau::Theme::current().iconAddTertiaryStyle());
+    importButton->setIcon(Nau::Theme::current().iconImportAssetHeader());
     importButton->setText(tr("Import"));
     importButton->setToolTip(tr("Import asset to current content folder"));
     importButton->setFixedHeight(32);

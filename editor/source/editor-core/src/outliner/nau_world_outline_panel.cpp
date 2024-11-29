@@ -267,8 +267,8 @@ void NauWorldOutlineTableWidget::customMenuRequested(QPoint pos)
         m_shortcutHub->getAssociatedKeySequence(NauShortcutOperation::WorldOutlinePaste), this, &NauWorldOutlineTableWidget::pasteItems);
 
     // TODO: It's going down
-    //auto actionDuplicate = menu->addAction(Nau::Theme::current().iconDuplicate(), tr("Duplicate"),
-    //    m_shortcutHub->getAssociatedKeySequence(NauShortcutOperation::WorldOutlineDuplicate), this, &NauWorldOutlineTableWidget::duplicateItems);
+    auto actionDuplicate = menu->addAction(Nau::Theme::current().iconDuplicate(), tr("Duplicate"),
+        m_shortcutHub->getAssociatedKeySequence(NauShortcutOperation::WorldOutlineDuplicate), this, &NauWorldOutlineTableWidget::duplicateItems);
 
     auto actionDelete = menu->addAction(Nau::Theme::current().iconDelete(), tr("Delete"),
         m_shortcutHub->getAssociatedKeySequence(NauShortcutOperation::WorldOutlineDelete), this, &NauWorldOutlineTableWidget::deleteItems);
@@ -292,7 +292,7 @@ void NauWorldOutlineTableWidget::customMenuRequested(QPoint pos)
     actionCopy->setEnabled(anyObjectsSelected);
     actionPaste->setEnabled(true/*!m_entityBuffer.empty()*/);
     // TODO: It's going down
-    //actionDuplicate->setEnabled(anyObjectsSelected);
+    actionDuplicate->setEnabled(anyObjectsSelected);
     actionDelete->setEnabled(anyObjectsSelected);
     actionRename->setEnabled(singleObjectSelected);
     actionFocus->setEnabled(singleObjectSelected);
@@ -326,7 +326,7 @@ bool NauWorldOutlineTableWidget::pasteItems()
 bool NauWorldOutlineTableWidget::duplicateItems()
 {
     // TODO: It's going down
-    //emit eventDuplicate();
+    emit eventDuplicate();
 
     return true;
 }
@@ -600,6 +600,11 @@ NauObjectCreationList* NauWorldOutlinerWidgetHeader::creationList() const
 }
 
 
+void NauWorldOutlinerWidgetHeader::updateCreationList(const std::string& typeName, bool state) const
+{
+    m_objectCreationList->updateTypeList(typeName, state);
+}
+
 // ** NauWorldOutlinerWidget
 
 NauWorldOutlinerWidget::NauWorldOutlinerWidget(NauShortcutHub* shortcutHub, QWidget* parent)
@@ -629,6 +634,11 @@ NauWorldOutlinerWidget::NauWorldOutlinerWidget(NauShortcutHub* shortcutHub, QWid
 NauWorldOutlinerWidgetHeader& NauWorldOutlinerWidget::getHeaderWidget() const
 {
     return *m_header;
+}
+
+void NauWorldOutlinerWidget::updateCreationList(const std::string& objectTypeName, bool state)
+{
+    m_header->updateCreationList(objectTypeName, state);
 }
 
 NauWorldOutlineTableWidget& NauWorldOutlinerWidget::outlinerTab()

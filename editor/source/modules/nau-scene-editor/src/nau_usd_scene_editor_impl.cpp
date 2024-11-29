@@ -13,7 +13,6 @@
 
 #include "viewport/nau_viewport_scene_editor_tools.hpp"
 #include "viewport/nau_viewport_scene_drag_drop_tools.hpp"
-#include "viewport/nau_scene_camera_controller.hpp"
 #include "nau/viewport/nau_base_viewport_controller.hpp"
 #include "nau/selection/nau_object_selection.hpp"
 #include "nau/nau_editor_delegates.hpp"
@@ -28,6 +27,52 @@
 #include "viewport/nau_outline_manager.hpp"
 
 #include <unordered_set>
+
+
+// ** NauUsdSceneEditorSnapshot
+
+void NauUsdSceneEditorSnapshot::takeShapshot(NauUsdSceneEditor* sceneEditor)
+{
+    if (m_snapshotInfo) {
+        NAU_FAILURE("Snapshot info already exist");
+        return;
+    }
+
+    m_sceneEditor = sceneEditor;
+    m_snapshotInfo = std::make_unique<NauUsdSceneEditorSnapshot::Info>();
+
+    auto cameraController = dynamic_cast<NauSceneCameraController*>(m_sceneEditor->m_cameraController.get());
+    if (!cameraController) {
+        return;
+    }
+
+    m_snapshotInfo->fov = cameraController->internalController().cameraFoV();
+    m_snapshotInfo->transform = cameraController->internalController().cameraMatrix();
+    m_snapshotInfo->clipPlanes = cameraController->internalController().cameraClippingPlanes();
+    m_snapshotInfo->easing = cameraController->internalController().cameraEasing();
+    m_snapshotInfo->acceleration = cameraController->internalController().cameraAcceleration();
+    m_snapshotInfo->speed = cameraController->internalController().cameraSpeed();
+}
+
+void NauUsdSceneEditorSnapshot::restoreShapshot()
+{
+    if (!m_snapshotInfo) {
+        NAU_FAILURE("Snapshot info is empty");
+        return;
+    }
+
+    auto cameraController = dynamic_cast<NauSceneCameraController*>(m_sceneEditor->m_cameraController.get());
+    if (!cameraController) {
+        return;
+    }
+
+    cameraController->internalController().setCameraFoV(m_snapshotInfo->fov);
+    cameraController->internalController().setCameraMatrix(m_snapshotInfo->transform);
+    cameraController->internalController().setCameraClippingPlanes(m_snapshotInfo->clipPlanes);
+    cameraController->internalController().setCameraEasing(m_snapshotInfo->easing);
+    cameraController->internalController().setCameraAcceleration(m_snapshotInfo->acceleration);
+    cameraController->internalController().setCameraSpeed(m_snapshotInfo->speed);
+}
 
 
 // ** NauUsdSceneEditor
@@ -77,21 +122,19 @@ void NauUsdSceneEditor::postInitialize()
     }
 
     m_outlinerObjectsList = {
-        "Xform",
-        "Mesh",
-        "VFXInstance",
-        "AudioEmitter",
-        "nau::scene::DirectionalLightComponent",
-        "nau::scene::OmnilightComponent",
-        "nau::scene::SpotlightComponent",
-        "nau::scene::CameraComponent"
+        {"Xform","Xform"},
+        {"NauAssetMesh", "Mesh"},
+        {"NauAssetVFX", "VFXInstance"},
+        {"AudioEmitter", "AudioEmitter"},
+        {"nau::scene::EnvironmentComponent", "nau::scene::EnvironmentComponent"},
+        {"nau::scene::DirectionalLightComponent", "nau::scene::DirectionalLightComponent"},
+        {"nau::scene::OmnilightComponent", "nau::scene::OmnilightComponent"},
+        {"nau::scene::SpotlightComponent", "nau::scene::SpotlightComponent"},
+        {"nau::scene::CameraComponent", "nau::scene::CameraComponent"}
     };  
 
     // Temporary solution to be able to separate creator lists
     outlinerCreationList->initTypesList(m_outlinerObjectsList);
-
-    // Inspector client
-
 
     initViewportTools();
 }
@@ -134,6 +177,11 @@ const NauUsdSceneSynchronizer& NauUsdSceneEditor::sceneSynchronizer() const noex
     return *m_sceneSynchronizer;
 }
 
+NauCameraControllerInterfacePtr NauUsdSceneEditor::sceneCameraController() const noexcept
+{
+    return m_cameraController;
+}
+
 void NauUsdSceneEditor::changeMode(bool isPlaymode)
 {
     // TODO: Do not unload scene. Use new world instance for playmode
@@ -142,8 +190,15 @@ void NauUsdSceneEditor::changeMode(bool isPlaymode)
     if (isPlaymode) {
         auto emptyStage = pxr::UsdStage::CreateInMemory();
         onSceneLoaded(emptyStage, NauUsdSceneSynchronizer::SyncMode::FromEngine);
+        m_snapshot = std::make_unique<NauUsdSceneEditorSnapshot>();
+        m_snapshot->takeShapshot(this);
     } else {
         onSceneLoaded(m_sceneManager->currentScene(), NauUsdSceneSynchronizer::SyncMode::FromEditor);
+    }
+
+    if (!isPlaymode && m_snapshot) {
+        m_snapshot->restoreShapshot();
+        m_snapshot.reset();
     }
 }
 
@@ -167,7 +222,7 @@ void NauUsdSceneEditor::initPrimFactory()
     factory.addCreator("AudioEmitter", std::make_shared<NauDefaultUsdPrimCreator>());
     // TODO:
     // factory.addCreator("AudioListener", std::make_shared<NauDefaultUsdPrimCreator>());
-    factory.addCreator("VFXInstance", std::make_shared<NauResourceUsdPrimCreator>("../particles/baseVFX.usda.nausd", pxr::SdfPath("/Root/VFX")));
+    factory.addCreator("NauAssetVFX", std::make_shared<NauResourceUsdPrimCreator>("../particles/baseVFX.usda.nausd", pxr::SdfPath("/Root/VFX")), "VFXInstance");
     factory.addCreator("AnimationController", std::make_shared<NauDefaultUsdPrimCreator>());
     factory.addCreator("AnimationSkeleton", std::make_shared<NauDefaultUsdPrimCreator>());
     factory.addCreator("RigidBodyCube", std::make_shared<NauDefaultUsdPrimCreator>());
@@ -176,7 +231,7 @@ void NauUsdSceneEditor::initPrimFactory()
     factory.addCreator("RigidBodyCylinder", std::make_shared<NauDefaultUsdPrimCreator>());
     factory.addCreator("RigidBodyConvexHull", std::make_shared<NauDefaultUsdPrimCreator>());
     factory.addCreator("RigidBodyMesh", std::make_shared<NauDefaultUsdPrimCreator>());
-    factory.addCreator("Mesh", std::make_shared<NauResourceUsdPrimCreator>("../meshes/cube.usda.nausd", pxr::SdfPath("/Root/Cube")));
+    factory.addCreator("NauAssetMesh", std::make_shared<NauResourceUsdPrimCreator>("../meshes/cube.usda.nausd", pxr::SdfPath("/Root/Cube")), "Mesh");
 }
 
 void NauUsdSceneEditor::initSceneManager()
@@ -457,10 +512,10 @@ void NauUsdSceneEditor::initViewportWidget()
 void NauUsdSceneEditor::initViewportTools()
 {
     m_sceneTools = std::make_shared<NauSceneEditorViewportTools>(m_selectionContainer);
-    auto cameraController = std::make_shared<NauSceneCameraController>();
+    m_cameraController = std::make_shared<NauSceneCameraController>();
     auto dragDropTools = std::make_shared<NauSceneDragDropTools>();
 
-    auto viewportController = std::make_shared<NauBaseEditorViewportController>(m_viewport, m_sceneTools, cameraController, dragDropTools);
+    auto viewportController = std::make_shared<NauBaseEditorViewportController>(m_viewport, m_sceneTools, m_cameraController, dragDropTools);
     viewportController->enableDrawGrid(true);
     viewportController->setSelectionCallback([this](QMouseEvent* event, float dpi) {
          selectObject(event, dpi);
@@ -605,6 +660,25 @@ void NauUsdSceneEditor::removePrim(const PXR_NS::UsdPrim& prim)
     for (auto childPrim : prim.GetAllChildren()) {
         removePrim(childPrim);
     }
+
+    auto proxyPrim = UsdProxy::UsdProxyPrim(prim);
+
+    auto type = proxyPrim.getProperty(pxr::TfToken("componentTypeName"));
+
+    if (type && type->isValid()) {
+        PXR_NS::VtValue value;
+        type->getValue(&value);
+
+        auto engineTypeName = value.Get<std::string>();
+
+        // TODO: Dirty hack
+        // Fix in future updates
+        if (engineTypeName == "nau::scene::EnvironmentComponent") {
+            auto outlinerWidget = m_mainEditor->mainWindow().outliner();
+            outlinerWidget->updateCreationList(engineTypeName, false);
+        }
+    }
+
     m_sceneUndoRedoSystem->addCommand<NauCommandRemoveUsdPrim>(prim.GetPath().GetString());
 }
 

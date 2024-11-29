@@ -235,5 +235,7 @@ void NauVFXEditor::loadVFXData(const QString& assetPath, NauInspectorPage& inspe
     auto rootPrim = m_vfxAsset->GetPseudoRoot();
     auto children = rootPrim.GetAllChildren();
     auto vfxPipelinePrim = children.front();
-    m_inspectorClient->buildFromPrim(vfxPipelinePrim);
+
+    const bool hideAddButton = true;
+    m_inspectorClient->buildFromPrim(vfxPipelinePrim, hideAddButton);
 }

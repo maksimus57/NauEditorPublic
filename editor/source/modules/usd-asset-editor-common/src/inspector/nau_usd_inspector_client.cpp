@@ -83,7 +83,8 @@ void NauUsdInspectorClient::buildFromMaterial(PXR_NS::UsdPrim prim)
     std::string displayName = m_currentScene->GetRootLayer()->GetDisplayName();
     std::string typeName = "Material";
 
-    auto header = m_inspector->addHeader(displayName, typeName);
+    const bool hideAddButton = true;
+    auto header = m_inspector->addHeader(displayName, typeName, hideAddButton);
 
     // Build for pipelines
     PXR_NS::VtArray<PXR_NS::TfToken> transformTokens;
@@ -94,7 +95,13 @@ void NauUsdInspectorClient::buildFromMaterial(PXR_NS::UsdPrim prim)
     m_updateTimer.start(16);
 }
 
-void NauUsdInspectorClient::buildFromPrim(PXR_NS::UsdPrim prim, bool isAsset)
+void NauUsdInspectorClient::buildFromPrim(PXR_NS::UsdPrim prim, bool hideAddButton)
+{
+    m_hideAddButton = hideAddButton;
+    buildFromPrimInternal(prim);
+}
+
+void NauUsdInspectorClient::buildFromPrimInternal(PXR_NS::UsdPrim prim)
 {
     m_inspector->clear();
     m_inspector->mainLayout()->addStretch(1);
@@ -115,7 +122,7 @@ void NauUsdInspectorClient::buildFromPrim(PXR_NS::UsdPrim prim, bool isAsset)
     } 
 
     // Add header
-    auto header = m_inspector->addHeader(displayName, typeName);
+    auto header = m_inspector->addHeader(displayName, typeName, m_hideAddButton);
 
     std::vector<std::string> excludeList = {
         "AudioComponentEmitter",
@@ -135,22 +142,22 @@ void NauUsdInspectorClient::buildFromPrim(PXR_NS::UsdPrim prim, bool isAsset)
         "nau::scene::BillboardComponent"
     };
 
-    auto allComponets = NauUsdPrimFactory::instance().registeredPrimCreators([](const std::string& value) {
+    auto allComponets = NauUsdPrimFactory::instance().registeredPrimCreatorsWithDisplayNames([](const std::string& value) {
         return value.find("NauGui") == std::string::npos;
     });
     
-    std::vector<std::string> resultTypes;
+    std::map<std::string, std::string> resultTypes;
 
     for (auto existedType : allComponets) {
         auto it = std::find_if(excludeList.begin(), excludeList.end(), [&existedType](const std::string& exc) {
-            return existedType == exc;
+            return existedType.second == exc;
         });
 
         if (it != excludeList.end()) {
             continue;
         }
 
-        resultTypes.push_back(existedType);
+        resultTypes[existedType.first] = existedType.second;
     }
 
     header->creationList()->initTypesList(resultTypes);
@@ -170,7 +177,7 @@ void NauUsdInspectorClient::buildFromPrim(PXR_NS::UsdPrim prim, bool isAsset)
     // Build prim components properties
     for (auto component : prim.GetAllChildren()) {
         // If we built from asset prim, skip component checking
-        if (!isAsset && !NauUsdPrimUtils::isPrimComponent(component)) {
+        if (!NauUsdPrimUtils::isPrimComponent(component)) {
             continue;
         }
         
@@ -361,7 +368,7 @@ void NauUsdInspectorClient::updateFromPrim(PXR_NS::UsdPrim prim)
     }
 
     if (m_needRebuild) {
-        buildFromPrim(prim);
+        buildFromPrimInternal(prim);
     }
 }
 

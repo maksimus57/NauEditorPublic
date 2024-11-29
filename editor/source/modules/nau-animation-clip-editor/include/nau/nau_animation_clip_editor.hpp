@@ -102,7 +102,8 @@ private slots:
     void updateAnimationDuration();
     void setControllerComponentTime(float time);
     void setAnimationState(AnimationState state);
-    void createClipAsset();
+    void createClipAssetFromDialog();
+    bool createClipAsset(const std::string& assetPath);
     void addAnimationAsset(const std::string& assetPath, const pxr::SdfPath& primPath);
     void setSelectedObject(const pxr::UsdPrim& prim, bool needReset);
 

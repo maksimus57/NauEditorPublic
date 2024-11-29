@@ -711,6 +711,10 @@ void NauReferenceProperty::setValueInternal(const PXR_NS::VtValue& value)
     NED_ASSERT(value.IsHolding<PXR_NS::SdfReference>());
     auto assetVal = value.Get<PXR_NS::SdfReference>();
 
+    if (assetVal.GetAssetPath() == "") {
+        return;
+    }
+
     auto& assetDb = nau::getServiceProvider().get<nau::IAssetDB>();
 
     std::string uidStr = "";
@@ -792,6 +796,10 @@ void NauAssetProperty::setValueInternal(const PXR_NS::VtValue& value)
 {
     NED_ASSERT(value.IsHolding<PXR_NS::SdfAssetPath>());
     auto assetVal = value.Get<PXR_NS::SdfAssetPath>();
+
+    if (assetVal.GetAssetPath() == "") {
+        return;
+    }
 
     auto& assetDb = nau::getServiceProvider().get<nau::IAssetDB>();
 

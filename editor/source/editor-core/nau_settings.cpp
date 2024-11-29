@@ -195,7 +195,7 @@ QVariant NauSettings::defaultValue(Setting key)
     static QHash<Setting, QVariant> defaultValueByKey = {
         { Setting::RecentLauncherOutputDirectory, NauDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).absoluteFilePath(QStringLiteral("gameClean")) },
         { Setting::RecentProjects,                QStringList()                                                                                                             },
-        { Setting::DefaultProjectLocation,        QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)                                                       },
+        { Setting::DefaultProjectLocation,        QDir::rootPath()                                                                                                          },
         { Setting::UndoRedoStackSize,             NauCommandStack::DefaultStackSize                                                                                         },
         { Setting::DeviceId,                      QString()                                                                                                                 },
         { Setting::Language,                      QStringLiteral("en")                                                                                                      }

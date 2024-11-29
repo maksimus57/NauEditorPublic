@@ -23,7 +23,7 @@
 
 // ** NauInspectorPageHeader
 
-NauInspectorPageHeader::NauInspectorPageHeader(const std::string& title, const std::string& subtitle)
+NauInspectorPageHeader::NauInspectorPageHeader(const std::string& title, const std::string& subtitle, bool hideAddButton)
     : m_title(new NauStaticTextLabel(title.c_str(), this))
     , m_icon(new QLabel(this))
     , m_subtitle(new NauStaticTextLabel(subtitle.c_str(), this))
@@ -67,20 +67,22 @@ NauInspectorPageHeader::NauInspectorPageHeader(const std::string& title, const s
     layout->addWidget(separator);
 
     // Add Button
-    auto addButton = new NauPrimaryButton();
-    addButton->setText(tr("Add"));
-    addButton->setIcon(Nau::Theme::current().iconAddPrimaryStyle());
-    addButton->setFixedHeight(NauAbstractButton::standardHeight());
-    layoutMain->addWidget(addButton);
+    if (!hideAddButton) {
+        auto addButton = new NauPrimaryButton();
+        addButton->setText(tr("Add"));
+        addButton->setIcon(Nau::Theme::current().iconAddPrimaryStyle());
+        addButton->setFixedHeight(NauAbstractButton::standardHeight());
+        layoutMain->addWidget(addButton);
 
-    connect(addButton, &NauAbstractButton::clicked, [=]
-    {
-        if (m_objectCreationList && addButton) {
-            const auto parentWidgetPosition = addButton->mapToGlobal(QPointF(0, 0)).toPoint();
-            const auto correctWidgetPosition = Nau::Utils::Widget::fitWidgetIntoScreen(m_objectCreationList->sizeHint(), parentWidgetPosition);
-            m_objectCreationList->base()->popup(correctWidgetPosition);
-        }
-    });
+        connect(addButton, &NauAbstractButton::clicked, [=]
+        {
+            if (m_objectCreationList && addButton) {
+                const auto parentWidgetPosition = addButton->mapToGlobal(QPointF(0, 0)).toPoint();
+                const auto correctWidgetPosition = Nau::Utils::Widget::fitWidgetIntoScreen(m_objectCreationList->sizeHint(), parentWidgetPosition);
+                m_objectCreationList->base()->popup(correctWidgetPosition);
+            }
+        });
+    }
 }
 
 void NauInspectorPageHeader::changeIcon(const std::string& resource)
@@ -159,9 +161,9 @@ void NauInspectorPage::clear()
     m_componentSpoilers.clear();
 }
 
-NauInspectorPageHeader* NauInspectorPage::addHeader(const std::string& objectName, const std::string& objectKind)
+NauInspectorPageHeader* NauInspectorPage::addHeader(const std::string& objectName, const std::string& objectKind, bool hideAddButton)
 {
-    auto header = new NauInspectorPageHeader(objectName, objectKind);
+    auto header = new NauInspectorPageHeader(objectName, objectKind, hideAddButton);
     m_layout->insertWidget(m_layout->count()-1, header);
 
     return header;

@@ -265,6 +265,9 @@ public:
     virtual NauIcon iconBrowserTreeFolder() const = 0;
     virtual NauIcon iconBreadCrumbsHome() const = 0;
     virtual NauIcon iconBreadCrumbsDelimiter() const = 0;
+    virtual NauIcon iconImportAssetHeader() const = 0;
+    virtual NauIcon iconImportAssetContext() const = 0;
+    virtual NauIcon iconAddAsset() const = 0;
 
     // Implementations must return filled NauIcon according to the following:
     // * NauIcon::Normal - a pixmap when the user is not interacting with icon, but it is available.

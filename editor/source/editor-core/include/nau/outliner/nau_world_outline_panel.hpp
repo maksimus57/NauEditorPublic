@@ -158,7 +158,10 @@ public:
     NauWorldOutlinerWidgetHeader(NauWidget* parent);
 
     const std::vector<NauWorldOutlineTableWidget::Columns>& currentFilters();
+
     NauObjectCreationList* creationList() const;
+    void updateCreationList(const std::string& typeName, bool state) const;
+
     void singleObjectCreation(const std::string& objectName);
 
 signals:
@@ -191,6 +194,8 @@ public:
     NauWorldOutlinerWidget(NauShortcutHub* shortcutHub, QWidget* parent = nullptr);
 
     NauWorldOutlinerWidgetHeader& getHeaderWidget() const;
+
+    void updateCreationList(const std::string& objectTypeName, bool state);
 
     NauWorldOutlineTableWidget& outlinerTab();
 

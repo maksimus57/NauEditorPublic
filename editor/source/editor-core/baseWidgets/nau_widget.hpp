@@ -622,6 +622,7 @@ public:
     void setMaximum(double max);
 
     void setDecimals(int decimalPrecision);
+    void disableSpinbox(int idx);
 
 signals:
     void eventValueChanged();

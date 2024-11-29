@@ -323,22 +323,34 @@ NauObjectCreationList::NauObjectCreationList(NauWidget* parent)
 
 }
 
-void NauObjectCreationList::initTypesList(const std::vector<std::string>& types)
+void NauObjectCreationList::initTypesList(const std::map<std::string, std::string>& types)
 {
+    m_actionMap.clear();
     clear();
 
     m_typesList = types;
-    for (const std::string& typeName : m_typesList) {
-        if (typeName.empty()) {
+    for (auto& typeInfo : m_typesList) {
+        if (typeInfo.first.empty()) {
             addSeparator();
             continue;
         }
 
-        addAction(typeName.c_str(), [this, &typeName]() { createObject(typeName); });
+        m_actionMap[typeInfo.first] = addAction(typeInfo.second.c_str(), [this, &typeInfo]() { createObject(typeInfo.first); });
     }
+}
+
+void NauObjectCreationList::updateTypeList(const std::string& typeName, bool state)
+{
+    m_actionMap[typeName]->setDisabled(state);
 }
 
 void NauObjectCreationList::createObject(const std::string& typeName)
 {
+    // TODO: Dirty hack
+    // Fix in future updates
+    if (typeName == "nau::scene::EnvironmentComponent") {
+        updateTypeList(typeName, true);
+    }
+
     emit eventCreateObject(typeName);
 }

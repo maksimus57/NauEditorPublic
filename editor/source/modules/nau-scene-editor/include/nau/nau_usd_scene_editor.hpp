@@ -8,6 +8,8 @@
 #include "nau/nau_usd_scene_editor_config.hpp"
 #include "nau/selection/nau_usd_selection_container.hpp"
 #include "nau/nau_usd_scene_synchronizer.hpp"
+#include "nau/viewport/nau_base_viewport_controller.hpp"
+#include "nau/viewport/nau_camera_controller.hpp"
 
 #include "nau/scene/nau_scene_editor_interface.hpp"
 #include "nau/app/nau_editor_interface.hpp"
@@ -24,6 +26,10 @@ class NAU_USD_SCENE_EDITOR_API NAU_ABSTRACT_TYPE NauUsdSceneEditorInterface : pu
 public:
     virtual NauUsdSelectionContainerPtr selectionContainer() const noexcept = 0;
     virtual const NauUsdSceneSynchronizer& sceneSynchronizer() const noexcept = 0;
+
+    // TODO: Do not use camera controller in scene editor interface
+    // Now it needs for camera settings updating from toolbar
+    virtual NauCameraControllerInterfacePtr sceneCameraController() const noexcept = 0;
 
     virtual PXR_NS::UsdPrim createPrim(const PXR_NS::SdfPath& parentPath, const PXR_NS::TfToken& name, const PXR_NS::TfToken& typeName, bool isComponent, std::string& uniquePath) = 0;
 };

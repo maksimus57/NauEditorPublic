@@ -919,6 +919,13 @@ void NauMultiValueDoubleSpinBox::setDecimals(int decimalPrecision)
     }
 }
 
+void NauMultiValueDoubleSpinBox::disableSpinbox(int idx)
+{
+    if (m_spinBoxes.size() >= (idx + 1)) {
+        m_spinBoxes[idx]->setDisabled(true);
+    }
+}
+
 
 // ** NauColorDialog
 

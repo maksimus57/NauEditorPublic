@@ -95,11 +95,11 @@ void NauProjectBrowserTableView::setDataAndSelectionModel(QAbstractItemModel& mo
 
 void NauProjectBrowserTableView::contextMenuEvent(QContextMenuEvent* event)
 {
-    QMenu menu;
+    NauMenu menu;
 
-    menu.addActions(m_fileOperationMenu->enumerateActionsFor(this));
+    m_fileOperationMenu->enumerateActionsFor(this, menu);
 
-    menu.exec(event->globalPos());
+    menu.base()->exec(event->globalPos());
 }
 
 void NauProjectBrowserTableView::focusInEvent(QFocusEvent* event)

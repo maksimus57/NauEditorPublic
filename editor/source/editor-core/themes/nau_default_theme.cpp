@@ -1504,6 +1504,21 @@ NauIcon NauDefaultTheme::iconBreadCrumbsDelimiter() const
     return generatePixmapIcon(QStringLiteral(":/UI/icons/browser/nav-delim.svg"));
 }
 
+NauIcon NauDefaultTheme::iconImportAssetHeader() const
+{
+    return generatePixmapIcon(QStringLiteral(":/UI/icons/browser/import-header.svg"));
+}
+
+NauIcon NauDefaultTheme::iconImportAssetContext() const
+{
+    return generatePixmapIcon(QStringLiteral(":/UI/icons/browser/import-context.svg"));
+}
+
+NauIcon NauDefaultTheme::iconAddAsset() const
+{
+    return generatePixmapIcon(QStringLiteral(":/UI/icons/browser/add.svg"));
+}
+
 NauIcon NauDefaultTheme::iconTableViewIcon() const
 {
     return generatePixmapIcon(QStringLiteral(":/UI/icons/table-view.svg"));

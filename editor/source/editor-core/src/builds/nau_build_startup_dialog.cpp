@@ -114,7 +114,7 @@ NauBuildStartupDailog::NauBuildStartupDailog(const NauProject& project, NauMainW
     m_cancelBuildButton->setIcon(Nau::Theme::current().iconClose());
     m_cancelBuildButton->setFixedHeight(NauAbstractButton::standardHeight());
     m_cancelBuildButton->setEnabled(false);
-    connect(m_cancelBuildButton, &NauAbstractButton::clicked, this, &NauBuildStartupDailog::runBuild);
+    connect(m_cancelBuildButton, &NauAbstractButton::clicked, this, &NauBuildStartupDailog::cancelBuild);
 
     m_buildStatusLabel = new NauLabel();
 

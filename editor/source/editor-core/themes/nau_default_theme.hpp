@@ -186,6 +186,9 @@ public:
     NauIcon iconBrowserTreeFolder() const override;
     NauIcon iconBreadCrumbsHome() const override;
     NauIcon iconBreadCrumbsDelimiter() const override;
+    NauIcon iconImportAssetHeader() const override;
+    NauIcon iconImportAssetContext() const override;
+    NauIcon iconAddAsset() const override;
 
     NauIcon iconTableViewIcon() const override;
     NauIcon iconTileViewIcon() const override;

@@ -33,7 +33,7 @@ class NAU_USD_ASSET_EDITOR_COMMON_API NauUsdPrimFactory
 public:
     static NauUsdPrimFactory& instance();
 
-    void addCreator(const std::string& primType, NauUsdPrimCreatorAbstractPtr creator);
+    void addCreator(const std::string& primType, NauUsdPrimCreatorAbstractPtr creator, const std::string& displayName = "");
 
     // TODO: Wrap part of the arguements to PrimCreationContext
     pxr::UsdPrim createPrim(pxr::UsdStageWeakPtr stage, const pxr::SdfPath& path, const pxr::TfToken& typeName,
@@ -42,8 +42,9 @@ public:
     typedef bool (*primFilter)(const std::string&);
 
     std::vector<std::string> registeredAllPrimCreators() const;
-    std::vector<std::string> registeredPrimCreators(primFilter filter) const;
+    std::map<std::string, std::string> registeredPrimCreatorsWithDisplayNames(primFilter filter) const;
 
 private:
     std::map<std::string, NauUsdPrimCreatorAbstractPtr> m_creators;
+    std::map<std::string, std::string> m_typesDisplayNames;
 };

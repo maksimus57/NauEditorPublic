@@ -337,6 +337,11 @@ bool NauSceneCameraController::isCameraActive(const NauViewportInput& input) con
     return mmbPressed || rmbPressed;
 }
 
+NauSceneEditorCameraControllerInternal& NauSceneCameraController::internalController()
+{
+    return m_internalController;
+}
+
 void NauSceneCameraController::changeCameraSpeed(float deltaSpeed)
 {
     m_internalController.changeCameraSpeed(deltaSpeed);
@@ -429,14 +434,13 @@ QMatrix4x3 NauSceneEditorCameraControllerInternal::cameraMatrix() const
         return result;
     }
     auto cameraObject = cameraManager->activeCamera();
-    union {
-        nau::math::Transform3 tf3{};
-        nau::math::Transform tf;
-    } transform;
+    auto matrix = cameraObject->getWorldTransform().getMatrix();
 
-    transform.tf = cameraObject->getWorldTransform();
-
-    return NauMathMatrixUtils::convertNauTransformToQMatrix(transform.tf3);
+    auto col0 = matrix.getCol0().getXYZ();
+    auto col1 = matrix.getCol1().getXYZ();
+    auto col2 = matrix.getCol2().getXYZ();
+    auto col3 = matrix.getCol3().getXYZ();
+    return NauMathMatrixUtils::convertNauTransformToQMatrix(nau::math::Transform3(col0, col1, col2, col3));
 }
 
 float NauSceneEditorCameraControllerInternal::cameraFoV() const

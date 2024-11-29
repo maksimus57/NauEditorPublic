@@ -14,6 +14,12 @@
 #include "themes/nau_theme.hpp"
 #include "nau/editor-engine/nau_editor_engine_services.hpp"
 
+// TODO: Do not use camera controller here
+// Bind UI changes to camera in NauUsdSceneEditor class
+#include "../viewport/nau_scene_camera_controller.hpp"
+#include "nau/nau_usd_scene_editor.hpp"
+#include "nau/nau_editor_plugin_manager.hpp"
+
 #include <QSignalBlocker>
 
 
@@ -23,15 +29,15 @@ NauSceneCameraViewSettings::NauSceneCameraViewSettings(QWidget* parent)
     : NauWidget(parent)
     , m_layout(new NauLayoutVertical(this))
     , m_clipping(new NauPropertyPoint2("", tr("Min"), tr("Max"))) // TODO: Fix the handling of the first parameter in the future
-    , m_view(new NauPropertyString(NauStringViewAttributeType::DEFAULT))
+    //, m_view(new NauPropertyString(NauStringViewAttributeType::DEFAULT))
     , m_fov(new NauPropertyInt())
 {
     // *** View ***
 
-    m_view->setLabel(tr("View"));
-    m_view->setValue(tr("Perspective"));
-    m_view->setContentsMargins(WidgetMargins);
-    m_view->setDisabled(true);
+    //m_view->setLabel(tr("View"));
+    //m_view->setValue(tr("Perspective"));
+    //m_view->setContentsMargins(WidgetMargins);
+    //m_view->setDisabled(true);
 
     // *** Fov ***
 
@@ -43,7 +49,13 @@ NauSceneCameraViewSettings::NauSceneCameraViewSettings(QWidget* parent)
     connect(m_fov, &NauPropertyInt::eventValueChanged, [this]()
     {
         const int fov = m_fov->getValue().convert<int>();
-        //NauEngineViewportAPI::setCameraFoV(fov);
+        // TODO: Do not use camera controller here
+        // Bind UI changes to camera in NauUsdSceneEditor class
+        auto& sceneEditor = Nau::EditorServiceProvider().get<NauUsdSceneEditorInterface>();
+        auto sceneCameraController = dynamic_cast<NauSceneCameraController*>(sceneEditor.sceneCameraController().get());
+        if (sceneCameraController) {
+            sceneCameraController->internalController().setCameraFoV(fov);
+        }
     });
 
     m_fov->setValue(DefaultFov);
@@ -60,11 +72,17 @@ NauSceneCameraViewSettings::NauSceneCameraViewSettings(QWidget* parent)
     connect(m_clipping, &NauPropertyPoint2::eventValueChanged, [this]()
     {
         const QVector2D clipping = m_clipping->getValue().convert<QVector2D>();
-        //NauEngineViewportAPI::setCameraClippingPlanes(clipping);
+        // TODO: Do not use camera controller here
+        // Bind UI changes to camera in NauUsdSceneEditor class
+        auto& sceneEditor = Nau::EditorServiceProvider().get<NauUsdSceneEditorInterface>();
+        auto sceneCameraController = dynamic_cast<NauSceneCameraController*>(sceneEditor.sceneCameraController().get());
+        if (sceneCameraController) {
+            sceneCameraController->internalController().setCameraClippingPlanes(clipping);
+        };
     });
 
-    m_layout->addWidget(m_view);
-    m_layout->addSpacing(12);
+    //m_layout->addWidget(m_view);
+    //m_layout->addSpacing(12);
     m_layout->addWidget(m_fov);
     m_layout->addSpacing(12);
     m_layout->addWidget(m_clipping);
@@ -72,8 +90,16 @@ NauSceneCameraViewSettings::NauSceneCameraViewSettings(QWidget* parent)
 
 void NauSceneCameraViewSettings::updateView()
 {
-    const int fov = 90;//NauEngineViewportAPI::cameraFoV();
-    m_fov->setValue(fov);
+    // TODO: Do not use camera controller here
+    // Bind UI changes to camera in NauUsdSceneEditor class
+    auto& sceneEditor = Nau::EditorServiceProvider().get<NauUsdSceneEditorInterface>();
+    auto sceneCameraController = dynamic_cast<NauSceneCameraController*>(sceneEditor.sceneCameraController().get());
+    if (sceneCameraController) {
+        QSignalBlocker blockerFov { m_fov };
+        QSignalBlocker blockerClipping { m_clipping };
+        m_fov->setValue(static_cast<int>(sceneCameraController->internalController().cameraFoV()));
+        m_clipping->setValue(sceneCameraController->internalController().cameraClippingPlanes());
+    };
 }
 
 
@@ -114,6 +140,9 @@ NauSceneCameraTransformSettings::NauSceneCameraTransformSettings(NauWidget* pare
     m_position->setDecimals(transformDecimalPrecision);
     m_rotation->setDecimals(transformDecimalPrecision);
 
+    constexpr int zSpinboxIdx = 2;
+    m_rotation->disableSpinbox(zSpinboxIdx);
+
     setupSpinBoxSizes(m_position);
     setupSpinBoxSizes(m_rotation);
 
@@ -151,7 +180,8 @@ NauSceneCameraTransformSettings::NauSceneCameraTransformSettings(NauWidget* pare
         }
 
         m_transformCache = NauMathMatrixUtils::TRSCompositionToMatrix(trsComposition);
-        //Nau::EditorEngine().mainViewport()->controller()->setCameraMatrix(m_transformCache);
+        
+        Nau::EditorEngine().cameraManager()->activeCamera()->setTranslation(nau::math::vec3::zero());
     });
 
     connect(m_revertRotationButton, &NauToolButton::clicked, [this] {
@@ -166,25 +196,34 @@ NauSceneCameraTransformSettings::NauSceneCameraTransformSettings(NauWidget* pare
         }
 
         m_transformCache = NauMathMatrixUtils::TRSCompositionToMatrix(trsComposition);
-        //Nau::EditorEngine().mainViewport()->controller()->setCameraMatrix(m_transformCache);
+
+        Nau::EditorEngine().cameraManager()->activeCamera()->setRotation(nau::math::quat::identity());
     });
 }
 
 void NauSceneCameraTransformSettings::updateTransform()
 {
-    //const QMatrix4x3 cameraMatrix = Nau::EditorEngine().mainViewport()->controller()->cameraMatrix();
-    //if (cameraMatrix == m_transformCache) {
-    //    return;
-    //}
-    //const QMatrix3x3 trsComposition = NauMathMatrixUtils::MatrixToTRSComposition(cameraMatrix);
+    // TODO: Do not use camera controller here
+    // Bind UI changes to camera in NauUsdSceneEditor class
+    auto& sceneEditor = Nau::EditorServiceProvider().get<NauUsdSceneEditorInterface>();
+    auto sceneCameraController = dynamic_cast<NauSceneCameraController*>(sceneEditor.sceneCameraController().get());
+    if (!sceneCameraController) {
+        return;
+    }
 
-    //QSignalBlocker positionBlocker(m_position);
-    //QSignalBlocker rotationBlocker(m_rotation);
-    //for (int i = 0; i < 3; ++i) {
-    //    (*m_position)[i]->setValue(trsComposition.data()[i]);
-    //    (*m_rotation)[i]->setValue(trsComposition.data()[i + 3]);
-    //}
-    //m_transformCache = cameraMatrix;
+    const QMatrix4x3 cameraMatrix = sceneCameraController->internalController().cameraMatrix();
+    if (cameraMatrix == m_transformCache) {
+        return;
+    }
+    const QMatrix3x3 trsComposition = NauMathMatrixUtils::MatrixToTRSComposition(cameraMatrix);
+
+    QSignalBlocker positionBlocker(m_position);
+    QSignalBlocker rotationBlocker(m_rotation);
+    for (int i = 0; i < 3; ++i) {
+        (*m_position)[i]->setValue(trsComposition.data()[i]);
+        (*m_rotation)[i]->setValue(trsComposition.data()[i + 3]);
+    }
+    m_transformCache = cameraMatrix;
 }
 
 void NauSceneCameraTransformSettings::updateCameraTransform()
@@ -198,7 +237,14 @@ void NauSceneCameraTransformSettings::updateCameraTransform()
     }
 
     m_transformCache = NauMathMatrixUtils::TRSCompositionToMatrix(trsComposition);
-    //Nau::EditorEngine().mainViewport()->controller()->setCameraMatrix(m_transformCache);
+
+    // TODO: Do not use camera controller here
+    // Bind UI changes to camera in NauUsdSceneEditor class
+    auto& sceneEditor = Nau::EditorServiceProvider().get<NauUsdSceneEditorInterface>();
+    auto sceneCameraController = dynamic_cast<NauSceneCameraController*>(sceneEditor.sceneCameraController().get());
+    if (sceneCameraController) {
+        sceneCameraController->internalController().setCameraMatrix(m_transformCache);
+    }
 }
 
 
@@ -212,7 +258,6 @@ NauSceneCameraMovementSettings::NauSceneCameraMovementSettings(QWidget* parent)
     , m_acceleration(new NauPropertyBool())
 {
     // *** Speed ***
-
     m_speed->setContentsMargins(WidgetMargins);
     m_speed->setLabel(tr("Speed"));
     m_speed->setRange(CAMERA_MIN_SPEED, CAMERA_MAX_SPEED);
@@ -222,13 +267,18 @@ NauSceneCameraMovementSettings::NauSceneCameraMovementSettings(QWidget* parent)
     connect(m_speed, &NauPropertyReal::eventValueChanged, [this]()
     {
         const float speed = m_speed->getValue().convert<float>();
-        //NauEngineViewportAPI::setCameraSpeed(speed);
+        // TODO: Do not use camera controller here
+        // Bind UI changes to camera in NauUsdSceneEditor class
+        auto& sceneEditor = Nau::EditorServiceProvider().get<NauUsdSceneEditorInterface>();
+        auto sceneCameraController = dynamic_cast<NauSceneCameraController*>(sceneEditor.sceneCameraController().get());
+        if (sceneCameraController) {
+            sceneCameraController->changeCameraSpeed(speed);
+        }
     });
 
     m_speed->setValue(DefaultSpeed);
 
     // *** Easing ***
-
     m_easing->setLabel("Easing");
     m_easing->setParent(this);
     m_easing->setContentsMargins(WidgetMargins);
@@ -236,7 +286,13 @@ NauSceneCameraMovementSettings::NauSceneCameraMovementSettings(QWidget* parent)
     connect(m_easing, &NauPropertyBool::eventValueChanged, [this]()
     {
         const bool easing = m_easing->getValue().convert<bool>();
-        //NauEngineViewportAPI::setCameraEasing(easing);
+        // TODO: Do not use camera controller here
+        // Bind UI changes to camera in NauUsdSceneEditor class
+        auto& sceneEditor = Nau::EditorServiceProvider().get<NauUsdSceneEditorInterface>();
+        auto sceneCameraController = dynamic_cast<NauSceneCameraController*>(sceneEditor.sceneCameraController().get());
+        if (sceneCameraController) {
+            sceneCameraController->internalController().setCameraEasing(easing);
+        }
     });
 
     m_easing->setValue(DefaultEasing);
@@ -250,7 +306,13 @@ NauSceneCameraMovementSettings::NauSceneCameraMovementSettings(QWidget* parent)
     connect(m_acceleration, &NauPropertyBool::eventValueChanged, [this]()
     {
         const bool acceleration = m_acceleration->getValue().convert<bool>();
-        //NauEngineViewportAPI::setCameraAcceleration(acceleration);
+        // TODO: Do not use camera controller here
+        // Bind UI changes to camera in NauUsdSceneEditor class
+        auto& sceneEditor = Nau::EditorServiceProvider().get<NauUsdSceneEditorInterface>();
+        auto sceneCameraController = dynamic_cast<NauSceneCameraController*>(sceneEditor.sceneCameraController().get());
+        if (sceneCameraController) {
+            sceneCameraController->internalController().setCameraAcceleration(acceleration);
+        }
     });
 
     m_acceleration->setValue(DefaultAcceleration);
@@ -262,15 +324,26 @@ NauSceneCameraMovementSettings::NauSceneCameraMovementSettings(QWidget* parent)
 
 void NauSceneCameraMovementSettings::updateMovement()
 {
-    //NauBaseViewportController* controller = Nau::EditorEngine().mainViewport()->controller();
-    //const float speed = controller->cameraSpeed();
-    //m_speed->setValue(speed);
+    // TODO: Do not use camera controller here
+    // Bind UI changes to camera in NauUsdSceneEditor class
+    auto& sceneEditor = Nau::EditorServiceProvider().get<NauUsdSceneEditorInterface>();
+    auto sceneCameraController = dynamic_cast<NauSceneCameraController*>(sceneEditor.sceneCameraController().get());
+    if (!sceneCameraController) {
+        return;
+    }
 
-    //const bool easing = controller->cameraEasing();
-    //m_easing->setValue(easing);
+    QSignalBlocker speedBlocker(m_speed);
+    QSignalBlocker easingBlocker(m_easing);
+    QSignalBlocker accelerationBlocker(m_acceleration);
 
-    //const bool acceleration = controller->cameraAcceleration();
-    //m_acceleration->setValue(acceleration);
+    const float speed = sceneCameraController->internalController().cameraSpeed();
+    m_speed->setValue(speed);
+
+    const bool easing = sceneCameraController->internalController().cameraEasing();
+    m_easing->setValue(easing);
+
+    const bool acceleration = sceneCameraController->internalController().cameraAcceleration();
+    m_acceleration->setValue(acceleration);
 }
 
 
@@ -281,7 +354,7 @@ NauSceneCameraSettingsWidget::NauSceneCameraSettingsWidget(NauWidget* parent)
     , m_button(nullptr)
     , m_layout(new NauLayoutVertical(this))
     , m_header(new NauSceneCameraHeaderWidget(this))
-    , m_preset(new NauPropertyString(NauStringViewAttributeType::DEFAULT))
+    //, m_preset(new NauPropertyString(NauStringViewAttributeType::DEFAULT))
     , m_view(new NauSceneCameraViewSettings(this))
     , m_transform(new NauSceneCameraTransformSettings(this))
     , m_movement(new NauSceneCameraMovementSettings(this))
@@ -309,14 +382,14 @@ NauSceneCameraSettingsWidget::NauSceneCameraSettingsWidget(NauWidget* parent)
     lineAfterTransform->setOffset(lineOffset);
 
     // *** Preset ***
-    m_preset->setLabel(tr("Preset"));
-    m_preset->setContentsMargins(16, 0, 16, 0);
-    m_preset->setValue(tr("Default"));
-    m_preset->setDisabled(true);
+    //m_preset->setLabel(tr("Preset"));
+    //m_preset->setContentsMargins(16, 0, 16, 0);
+    //m_preset->setValue(tr("Default"));
+    //m_preset->setDisabled(true);
 
     m_layout->addWidget(m_header);
-    m_layout->addWidget(m_preset);
-    m_layout->addWidget(lineAfterPreset);
+    //m_layout->addWidget(m_preset);
+    //m_layout->addWidget(lineAfterPreset);
     m_layout->addWidget(m_view);
     m_layout->addWidget(lineAfterView);
     m_layout->addWidget(m_transform);

@@ -8,6 +8,7 @@
 #include "nau_project_browser_file_system_model.hpp"
 #include "nau_project_browser_proxy_models.hpp"
 #include "nau_log.hpp"
+#include "nau_content_creator.hpp"
 #include "themes/nau_theme.hpp"
 
 #include <QApplication>
@@ -185,7 +186,7 @@ void NauProjectBrowserFileOperationsMenu::watch(QAbstractItemView* view)
         emit eventCreateDirectoryRequested(view, current);
     });
 
-    action = registerAction(Nau::Theme::current().iconAddTertiaryStyle(), tr("Import asset"), NauShortcutOperation::ProjectBrowserImportAsset);
+    action = registerAction(Nau::Theme::current().iconImportAssetContext(), tr("Import asset"), NauShortcutOperation::ProjectBrowserImportAsset);
     connect(action, &NauAction::triggered, this, [this, view] {
         NED_DEBUG("Import asset triggered for {}", view->objectName().toUtf8().constData());
         emit eventImportAssetRequested();
@@ -206,7 +207,7 @@ void NauProjectBrowserFileOperationsMenu::watch(QAbstractItemView* view)
         std::bind(&NauProjectBrowserFileOperationsMenu::updateViewSelectionData, this, view));
 }
 
-QList<QAction*> NauProjectBrowserFileOperationsMenu::enumerateActionsFor(QAbstractItemView* view)
+void NauProjectBrowserFileOperationsMenu::enumerateActionsFor(QAbstractItemView* view, NauMenu& menu)
 {
     auto it = m_views.find(view);
     NED_ASSERT(it != m_views.end());
@@ -244,45 +245,51 @@ QList<QAction*> NauProjectBrowserFileOperationsMenu::enumerateActionsFor(QAbstra
         }
     }
 
-    QList<QAction*> result;
-
     if (!haveSelection) {
-        result << data.actions[NauShortcutOperation::ProjectBrowserImportAsset];
+        const QString currentDir = data.destinationIndex
+            .data(NauProjectBrowserFileSystemModel::FilePathRole).toString();
+
+        m_addContentMenu = new NauAddContentMenu(currentDir, nullptr);
+        if (!m_addContentMenu->base()->actions().isEmpty()) {
+            auto addAction = menu.base()->addMenu(m_addContentMenu->base());
+            addAction->setIcon(Nau::Theme::current().iconAddAsset());
+
+        }
+        menu.addAction(data.actions[NauShortcutOperation::ProjectBrowserImportAsset]);
+    }
+
+    if (!haveSelection || (isDirOnly && isOnlyItem)) {
+        menu.addAction(data.actions[NauShortcutOperation::ProjectBrowserCreateDir]);
     }
 
     if (haveSelection && !hasProjectDir) {
-        result << data.actions[NauShortcutOperation::ProjectBrowserCopy];
+        menu.addAction(data.actions[NauShortcutOperation::ProjectBrowserCopy]);
 
         if (!allReadonly && allDeletable) {
-            result << data.actions[NauShortcutOperation::ProjectBrowserCut];
+            menu.addAction(data.actions[NauShortcutOperation::ProjectBrowserCut]);
         }
 
-        result << data.actions[NauShortcutOperation::ProjectBrowserDuplicate];
+        menu.addAction(data.actions[NauShortcutOperation::ProjectBrowserDuplicate]);
     }
 
     if (hasFileInClipboard) {
-        result << data.actions[NauShortcutOperation::ProjectBrowserPaste];
+        menu.addAction(data.actions[NauShortcutOperation::ProjectBrowserPaste]);
     }
 
     if (haveSelection && !allReadonly && !hasProjectDir) {
         if (isOnlyItem) {
-            result << data.actions[NauShortcutOperation::ProjectBrowserRename];
+            menu.addAction(data.actions[NauShortcutOperation::ProjectBrowserRename]);
         }
 
         if (allDeletable) {
-            result << data.actions[NauShortcutOperation::ProjectBrowserDelete];
+            menu.addAction(data.actions[NauShortcutOperation::ProjectBrowserDelete]);
         }
     }
 
 #ifdef Q_OS_WIN
-    result << data.actions[NauShortcutOperation::ProjectBrowserViewInShell];
+    menu.addAction(data.actions[NauShortcutOperation::ProjectBrowserViewInShell]);
 #endif
 
-    if (!haveSelection || (isDirOnly && isOnlyItem)) {
-        result << data.actions[NauShortcutOperation::ProjectBrowserCreateDir];
-    }
-
-    return result;
 }
 
 void NauProjectBrowserFileOperationsMenu::updateViewSelectionData(QAbstractItemView* view)

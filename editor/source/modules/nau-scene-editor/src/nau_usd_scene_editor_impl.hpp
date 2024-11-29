@@ -13,6 +13,8 @@
 #include "nau/selection/nau_usd_selection_container.hpp"
 #include "nau/ui-translator/nau_usd_scene_ui_translator.hpp"
 #include "viewport/nau_viewport_scene_editor_tools.hpp"
+#include "viewport/nau_scene_camera_controller.hpp"
+
 #include "widgets/nau_scene_editor_viewport_toolbar.hpp"
 
 #include "nau/scene/nau_scene_editor_interface.hpp"
@@ -23,12 +25,40 @@
 #include <memory>
 
 
+// ** NauUsdSceneEditorSnapshot
+
+class NauUsdSceneEditorSnapshot
+{
+    struct Info
+    {
+        QMatrix4x3 transform;
+        QVector2D clipPlanes;
+        float fov;
+        bool easing;
+        bool acceleration;
+        float speed;
+    };
+
+public:
+    NauUsdSceneEditorSnapshot() = default;
+    ~NauUsdSceneEditorSnapshot() = default;
+
+    void takeShapshot(class NauUsdSceneEditor* sceneEditor);
+    void restoreShapshot();
+
+private:
+    std::unique_ptr<Info> m_snapshotInfo;
+    class NauUsdSceneEditor* m_sceneEditor;
+};
+using NauUsdSceneEditorSnapshotPtr = std::unique_ptr<NauUsdSceneEditorSnapshot>;
+
+
 // ** NauUsdSceneEditor
 
 class NauUsdSceneEditor : public NauUsdSceneEditorInterface
 {
     NAU_CLASS_(NauUsdSceneEditor, NauUsdSceneEditorInterface)
-
+    friend class NauUsdSceneEditorSnapshot;
 public:
     NauUsdSceneEditor();
     ~NauUsdSceneEditor();
@@ -51,6 +81,8 @@ public:
     // Usd scene editor overrides
     NauUsdSelectionContainerPtr selectionContainer() const noexcept override;
     const NauUsdSceneSynchronizer& sceneSynchronizer() const noexcept override;
+    NauCameraControllerInterfacePtr sceneCameraController() const noexcept override;
+
     void changeMode(bool isPlaymode) override;
     PXR_NS::UsdPrim createPrim(const PXR_NS::SdfPath& parentPath, const PXR_NS::TfToken& name, const PXR_NS::TfToken& typeName, bool isComponent, std::string& uniquePath) override;
 
@@ -90,7 +122,7 @@ private:
     std::shared_ptr<NauUsdOutlinerClient> m_outlinerClient;
     std::shared_ptr<NauUsdInspectorClient> m_inspectorClient;
 
-    std::vector<std::string> m_outlinerObjectsList;
+    std::map<std::string, std::string> m_outlinerObjectsList;
     std::vector<std::string> m_inspectorObjectsList;
 
     NauUsdSceneUndoRedoSystemPtr m_sceneUndoRedoSystem;
@@ -103,11 +135,13 @@ private:
     NauCallbackId m_transformToolCallbackId;
 
     // Viewport tools
+    NauCameraControllerInterfacePtr m_cameraController;
     std::shared_ptr<NauSceneEditorViewportTools> m_sceneTools;
 
     //Widgets
     NauViewportWidget* m_viewport;
     NauSceneEditorViewportToolbar* m_toolbar;
-
+    
     NauUsdSceneSynchronizer::SyncMode m_sceneSyncMode;
+    NauUsdSceneEditorSnapshotPtr m_snapshot;
 };

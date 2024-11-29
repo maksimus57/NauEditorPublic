@@ -33,7 +33,7 @@ public:
 
     void handleNotice(NauUITranslatorProxyNotice const& notice) override;
 
-    void buildFromPrim(PXR_NS::UsdPrim prim, bool isAssetPrim = false);
+    void buildFromPrim(PXR_NS::UsdPrim prim, bool hideAddButton = false);
 
     // TODO: Temp function for material editor
     void buildFromMaterial(PXR_NS::UsdPrim prim);
@@ -49,6 +49,9 @@ signals:
     void eventComponentRemoved(const PXR_NS::SdfPath& path);
 
 private:
+
+    void buildFromPrimInternal(PXR_NS::UsdPrim prim);
+
     NauUsdPropertyAbstract* createPropertyWidget(const PXR_NS::SdfPath& primPath, const PXR_NS::VtValue& value, const std::string& rawTypeName, const std::string& metaInfo, PXR_NS::TfToken propName);
     NauUsdPropertyAbstract* createReferenceWidget(const PXR_NS::SdfPath& primPath, const PXR_NS::VtValue& value, const std::string& rawTypeName, const std::string& metaInfo);
 
@@ -69,4 +72,6 @@ private:
     QTimer m_updateTimer;
 
     NauInspectorPage* m_inspector;
+
+    bool m_hideAddButton;
 };

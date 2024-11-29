@@ -95,6 +95,8 @@ public:
     void openEditorPanel();
     void createEditorPanel();
 
+    bool openScene(const std::string& assetPath);
+
 private:
 
     NauGuiEditor(const NauGuiEditor&) = default;

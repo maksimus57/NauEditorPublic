@@ -10,6 +10,7 @@
 #include "nau/utils/nau_usd_editor_utils.hpp"
 
 #include "pxr/usd/usd/primRange.h"
+#include "usd_proxy/usd_prim_proxy.h"
 
 
 //TODO: Refine the api architecture of client-widget interaction in the future
@@ -132,11 +133,44 @@ void NauUsdOutlinerClient::addItemFromPrim(PXR_NS::UsdPrim newPrim)
             parentTreeItem->addChild(item);
             m_outlinerTab.expandItem(parentTreeItem);
 
+            auto proxyPrim = UsdProxy::UsdProxyPrim(newPrim);
+            auto componentType = proxyPrim.getProperty(pxr::TfToken("componentTypeName"));
+
+            if (componentType && componentType->isValid()) {
+                PXR_NS::VtValue value;
+                componentType->getValue(&value);
+
+                auto engineTypeName = value.Get<std::string>();
+
+                // TODO: Dirty hack
+                // Fix in future updates
+                if (engineTypeName == "nau::scene::EnvironmentComponent") {
+                    m_outlinerWidget->updateCreationList(engineTypeName, true);
+                }
+            }
+
             emit eventBillboardCreateRequested(type, primPath);
             return;
         }
     }
+
     m_outlinerTab.addTopLevelItem(item);
+
+    auto proxyPrim = UsdProxy::UsdProxyPrim(newPrim);
+    auto componentType = proxyPrim.getProperty(pxr::TfToken("componentTypeName"));
+
+    if (componentType && componentType->isValid()) {
+        PXR_NS::VtValue value;
+        componentType->getValue(&value);
+
+        auto engineTypeName = value.Get<std::string>();
+
+        // TODO: Dirty hack
+        // Fix in future updates
+        if (engineTypeName == "nau::scene::EnvironmentComponent") {
+            m_outlinerWidget->updateCreationList(engineTypeName, true);
+        }
+    }
 
     emit eventBillboardCreateRequested(type, primPath);
 }

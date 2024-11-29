@@ -427,10 +427,7 @@ void NauEditorEngine::pausePlay(const bool isPaused)
     auto& sceneManager = nau::getServiceProvider().get<nau::scene::ISceneManager>();
     sceneManager.getDefaultWorld().setSimulationPause(isPaused);
 
-  auto activeCamera = m_cameraManager->activeCamera();
-  activeCamera->setCameraName(isPaused ? NauEditorCameraManager::MainCameraName : "");
-
-  nau::getServiceProvider().get<NauOutlineManagerInterface>().enableOutline(isPaused);
+    nau::getServiceProvider().get<NauOutlineManagerInterface>().enableOutline(isPaused);
 }
 
 // Perhaps the workcycle needs to be removed from the editor engine

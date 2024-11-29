@@ -19,6 +19,7 @@ void NauSceneEditorViewportTools::handleMouseInput(QMouseEvent* mouseEvent, floa
 {
     if (m_activeTool) {
         m_activeTool->handleMouseInput(mouseEvent, dpi);
+        m_objectTools->updateBasis();
     }
     if (m_objectTools) {
         m_objectTools->handleMouseInput(mouseEvent, dpi);

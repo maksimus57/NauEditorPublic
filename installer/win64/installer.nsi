@@ -27,6 +27,8 @@ RequestExecutionLevel admin
     !define MUI_FINISHPAGE_RUN_CHECKED
     !define MUI_FINISHPAGE_RUN_TEXT $(StartEditorStr)
     !define MUI_FINISHPAGE_RUN_FUNCTION "LaunchNauEditor"
+    !define MUI_FINISHPAGE_SHOWREADME_TEXT $(ShowReadmeStr)
+    !define MUI_FINISHPAGE_SHOWREADME "https://nauengine.org/docs/beta/user-doc/introduction_to_nau/install_nau/install_nau_doc.html"
 !insertmacro MUI_PAGE_FINISH
 
 !insertmacro MUI_UNPAGE_CONFIRM
@@ -164,3 +166,6 @@ LangString VsSectionStr ${LANG_RUSSIAN} "Компонент Visual C++"
 
 LangString CoreSectionStr ${LANG_ENGLISH} "!NauEngine Core files"
 LangString CoreSectionStr ${LANG_RUSSIAN} "!NauEngine Файлы"
+
+LangString ShowReadmeStr ${LANG_ENGLISH} "Show NauEngine Quickstart Guide"
+LangString ShowReadmeStr ${LANG_RUSSIAN} "Открыть краткое руководство по работе c NauEngine"

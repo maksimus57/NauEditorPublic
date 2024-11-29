@@ -58,21 +58,21 @@ NauSceneEditorViewportToolbar::NauSceneEditorViewportToolbar(NauViewportWidget& 
     m_coordinateSpaceButton->setToolTip(tr("Set transform tools space coordinates"));
     m_coordinateSpaceButton->setFixedHeight(16);
     rightSection->addExternalWidget(m_coordinateSpaceButton);
-    //rightSection->addSeparator();
+    rightSection->addSeparator();
 
     // Camera settings
-    //m_cameraButton = rightSection->addButton(Nau::Theme::current().iconCameraSettings(), tr("Camera settings"), this, &NauSceneEditorViewportToolbar::handleCameraSettings);
+    m_cameraButton = rightSection->addButton(Nau::Theme::current().iconCameraSettings(), tr("Camera settings"), this, &NauSceneEditorViewportToolbar::handleCameraSettings);
 
-    //m_cameraSettingsView->setControlButton(m_cameraButton);
-    //connect(m_cameraSettingsView, &NauSceneCameraSettingsWidget::close, [this] {
-    //    m_cameraButton->setChecked(false);
-    //});
+    m_cameraSettingsView->setControlButton(m_cameraButton);
+    connect(m_cameraSettingsView, &NauSceneCameraSettingsWidget::close, [this] {
+        m_cameraButton->setChecked(false);
+    });
 
-    //// Default settings
-    //buttonHam->setEnabled(false);  // TODO: menun
-    //m_cameraButton->setCheckable(true);
+    // Default settings
+    buttonHam->setEnabled(false);  // TODO: menun
+    m_cameraButton->setCheckable(true);
 
-    //// TODO: Make global update timer for dynamic UI redraw
+    // TODO: Make global update timer for dynamic UI redraw
     auto updateTimer = new QTimer(this);
     connect(updateTimer, &QTimer::timeout, this, &NauSceneEditorViewportToolbar::updateFromViewport);
     updateTimer->start(1000 / 60);
@@ -109,7 +109,7 @@ void NauSceneEditorViewportToolbar::handleCameraSettings()
 
 void NauSceneEditorViewportToolbar::handlePlaymodeOn()
 {
-    //m_cameraButton->setEnabled(false);
+    m_cameraButton->setEnabled(false);
     m_selectActionButton->setEnabled(false);
     m_translateActionButton->setEnabled(false);
     m_rotateActionButton->setEnabled(false);
@@ -118,7 +118,7 @@ void NauSceneEditorViewportToolbar::handlePlaymodeOn()
 
 void NauSceneEditorViewportToolbar::handlePlaymodeOff()
 {
-    //m_cameraButton->setEnabled(true);
+    m_cameraButton->setEnabled(true);
     m_selectActionButton->setEnabled(true);
     m_translateActionButton->setEnabled(true);
     m_rotateActionButton->setEnabled(true);

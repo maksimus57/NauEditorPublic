@@ -40,7 +40,7 @@ void NauGuiEditorSnapshot::restoreShapshot()
         return;
     }
 
-    m_editor->openAsset(m_snapshotInfo->scenePath);
+    m_editor->openScene(m_snapshotInfo->scenePath);
 }
 
 
@@ -114,12 +114,7 @@ bool NauGuiEditor::openAsset(const std::string& assetPath)
 {
     openEditorPanel();
 
-    m_assetPath = assetPath;
-    if(m_sceneManager->currentScene()) {
-        m_sceneManager->unloadCurrentScene();
-    }
-
-    return m_sceneManager->loadScene(assetPath);
+    return openScene(assetPath);
 }
 
 bool NauGuiEditor::saveAsset(const std::string& assetPath)
@@ -247,7 +242,7 @@ void NauGuiEditor::openEditorPanel()
     NauObjectCreationList* creationList = outlinerWidget->getHeaderWidget().creationList();
 
     // Temporary solution to be able to separate creator lists
-    creationList->initTypesList(NauUsdPrimFactory::instance().registeredPrimCreators([](const std::string& value){ 
+    creationList->initTypesList(NauUsdPrimFactory::instance().registeredPrimCreatorsWithDisplayNames([](const std::string& value){ 
         return value.find("NauGui") != std::string::npos;
     }));
 
@@ -256,6 +251,17 @@ void NauGuiEditor::openEditorPanel()
     auto viewport = viewportManager->createViewport(editorName().data());
     m_viewportContainer->setViewport(viewport);
     viewport->changeViewportController(std::make_shared<NauBaseEditorViewportController>(viewport, nullptr, nullptr, nullptr));
+}
+
+
+bool NauGuiEditor::openScene(const std::string& assetPath)
+{
+    m_assetPath = assetPath;
+    if(m_sceneManager->currentScene()) {
+        m_sceneManager->unloadCurrentScene();
+    }
+
+    return m_sceneManager->loadScene(assetPath);
 }
 
 void NauGuiEditor::initPrimFactory()
@@ -333,7 +339,8 @@ void NauGuiEditor::initInspectorClient()
             return;
         }
 
-        m_inspectorClient->buildFromPrim(selection.back());
+        const bool hideAddButton = true;
+        m_inspectorClient->buildFromPrim(selection.back(), hideAddButton);
     });
 }
 

@@ -32,7 +32,7 @@ private:
     NauLayoutVertical* m_layout;
 
     NauPropertyPoint2* m_clipping;
-    NauPropertyString* m_view;
+    //NauPropertyString* m_view;
     NauPropertyInt* m_fov;
 
 private:
@@ -147,6 +147,9 @@ public:
     void setControlButton(NauToolButton* button);
 
 signals:
+    void onViewChanged();
+    void onTransformChanged();
+    void onMovementChanged();
     void close();
 
 private:
@@ -163,7 +166,7 @@ private:
     NauLayoutVertical* m_layout;
 
     NauSceneCameraHeaderWidget* m_header;
-    NauPropertyString* m_preset;
+    //NauPropertyString* m_preset;
     NauSceneCameraViewSettings* m_view;
     NauSceneCameraTransformSettings* m_transform;
     NauSceneCameraMovementSettings* m_movement;

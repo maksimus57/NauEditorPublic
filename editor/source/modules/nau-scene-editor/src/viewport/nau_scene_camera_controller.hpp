@@ -91,6 +91,9 @@ public:
 
     bool isCameraActive(const NauViewportInput& input) const override;
 
+    // TODO: Delete internal controller getter
+    NauSceneEditorCameraControllerInternal& internalController();
+
 private:
     std::unique_ptr<NauCameraMoveActionAbstract> makeMoveAction(Action action, float deltaTime, const QVector3D & direction, QPointF deltaMouse) const;
     float calculateCameraBoost(bool shiftPressed) const;

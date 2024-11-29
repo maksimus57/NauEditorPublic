@@ -23,13 +23,12 @@ NauAudioContainerView::NauAudioContainerView(nau::audio::AudioAssetContainerPtr 
     : NauWidget(parent)
     , m_container(asset)
     , m_kindDropdown(new NauComboBox(this))
-    , m_header(new NauInspectorPageHeader("", ""))
+    , m_header(new NauInspectorPageHeader("", "", true))
 {
     // Header
     auto layout = new NauLayoutVertical(this);
     m_header->changeTitle(QFileInfo(asset->name().c_str()).baseName().toStdString());
     m_header->changeIcon(":/Inspector/icons/audio/audio-container-inspector-header.png");
-    m_header->findChild<NauPrimaryButton*>()->hide();  // Temp hack
     layout->addWidget(m_header);
 
     // Playback view

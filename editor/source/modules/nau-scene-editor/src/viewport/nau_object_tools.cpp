@@ -7,6 +7,7 @@
 #include "nau/math/nau_matrix_math.hpp"
 #include "nau/math/math.h"
 #include "nau/gizmo/nau_camera_gizmo.hpp"
+#include "nau/gizmo/nau_directional_light_gizmo.hpp"
 #include "nau/NauComponentSchema/nauComponent.h"
 
 #include "nau/utils/nau_usd_editor_utils.hpp"
@@ -20,9 +21,7 @@
 // ** NauObjectTools
 
 NauObjectTools::NauObjectTools(NauUsdSelectionContainerPtr container)
-    : m_applyDeltaCallbackId()
-    , m_stoppedUsingCallbackId()
-    , m_container(container)
+        : m_applyDeltaCallbackId(), m_stoppedUsingCallbackId(), m_container(container)
 {
     init();
 }
@@ -34,14 +33,14 @@ NauObjectTools::~NauObjectTools() noexcept
 
 void NauObjectTools::handleMouseInput(QMouseEvent* mouseEvent, float dpi)
 {
-    for (auto& gizmo : m_gizmos) {
+    for (auto& gizmo: m_gizmos) {
         gizmo->handleMouseInput(mouseEvent, dpi);
     }
 }
 
 bool NauObjectTools::isUsing() const
 {
-    for (auto& gizmo : m_gizmos) {
+    for (auto& gizmo: m_gizmos) {
         if (gizmo->isUsing()) {
             return true;
         }
@@ -51,7 +50,7 @@ bool NauObjectTools::isUsing() const
 
 void NauObjectTools::updateBasis()
 {
-    for (auto& gizmo : m_gizmos) {
+    for (auto& gizmo: m_gizmos) {
         if (gizmo->isActive()) {
             auto primTransform = NauUsdPrimUtils::worldPrimTransform(m_container->selection().back());
             const nau::math::mat4 transform = NauUsdEditorMathUtils::gfMatrixToNauMatrix(primTransform);
@@ -63,7 +62,7 @@ void NauObjectTools::updateBasis()
 std::string NauObjectTools::getComponentTypeName(const pxr::UsdPrim& prim)
 {
     std::string typeName;
-    if (pxr::UsdNauComponent component{ prim }) {
+    if (pxr::UsdNauComponent component{prim}) {
         component.GetComponentTypeNameAttr().Get(&typeName);
     }
     return typeName;
@@ -84,7 +83,7 @@ nau::math::mat4 NauObjectTools::transform(const nau::math::mat4& transform, cons
 
 void NauObjectTools::applyDeltaToSelection(nau::math::vec3 delta)
 {
-    for (auto selected : m_container->selection()) {
+    for (auto selected: m_container->selection()) {
         auto primTransform = NauUsdPrimUtils::localPrimTransform(selected);
         const nau::math::mat4 oldTransform = NauUsdEditorMathUtils::gfMatrixToNauMatrix(primTransform);
         const pxr::GfMatrix4d newTransform = NauUsdEditorMathUtils::nauMatrixToGfMatrix(transform(oldTransform, delta));
@@ -96,7 +95,7 @@ void NauObjectTools::init()
 {
     auto selection = m_container->selection();
 
-    for (auto& gizmo : m_gizmos) {
+    for (auto& gizmo: m_gizmos) {
         // set gizmo pivot if there is a selected object
         if (!selection.empty()) {
             // get pivot from first object from selection
@@ -125,18 +124,22 @@ void NauObjectTools::init()
     };
     m_selectionChangedCallbackId = m_container->selectionChangedDelegate.addCallback(selectionChangedLambda);
 
-    m_transformToolCallbackId = NauTransformTool::StopUsingDelegate.addCallback([this](const pxr::SdfPath& primPath, const pxr::GfMatrix4d& originalTransform, const pxr::GfMatrix4d& newTransform) {
-        const nau::math::mat4 transform = NauUsdEditorMathUtils::gfMatrixToNauMatrix(newTransform);
-        for (auto& gizmo: m_gizmos) {
-            gizmo->setBasis(transform);
-        }
-    });
+    m_transformToolCallbackId = NauTransformTool::StopUsingDelegate.addCallback(
+            [this](const pxr::SdfPath& primPath,
+                   const pxr::GfMatrix4d& originalTransform,
+                   const pxr::GfMatrix4d& newTransform)
+            {
+                const nau::math::mat4 transform = NauUsdEditorMathUtils::gfMatrixToNauMatrix(newTransform);
+                for (auto& gizmo: m_gizmos) {
+                    gizmo->setBasis(transform);
+                }
+            });
 }
 
 void NauObjectTools::terminate()
 {
     NauTransformTool::StopUsingDelegate.deleteCallback(m_transformToolCallbackId);
-    for (auto& gizmo : m_gizmos) {
+    for (auto& gizmo: m_gizmos) {
         gizmo->deactivate();
         gizmo->startedUsing.deleteCallback(m_startedUsingCallbackId);
         gizmo->deltaUpdated.deleteCallback(m_applyDeltaCallbackId);
@@ -149,8 +152,8 @@ void NauObjectTools::startUse()
 {
     m_originalSelectedObjectsTransform.clear();
 
-    for (auto selected : m_container->selection()) {
-        m_originalSelectedObjectsTransform[selected.GetPrimPath().GetString()] = NauUsdPrimUtils::localPrimTransform(selected);;
+    for (auto selected: m_container->selection()) {
+        m_originalSelectedObjectsTransform[selected.GetPrimPath().GetString()] = NauUsdPrimUtils::localPrimTransform(selected);
     }
 }
 
@@ -161,7 +164,7 @@ void NauObjectTools::stopUse()
 
 void NauObjectTools::onSelectionChanged(const NauUsdPrimsSelection& selection)
 {
-    for (auto& gizmo : m_gizmos) {
+    for (auto& gizmo: m_gizmos) {
         gizmo->deactivate();
     }
     m_gizmos.clear();
@@ -169,7 +172,7 @@ void NauObjectTools::onSelectionChanged(const NauUsdPrimsSelection& selection)
         const pxr::UsdPrim& selectedPrim = selection.back();
         createObjectGizoms(selectedPrim);
     }
-    for (auto& gizmo : m_gizmos) {
+    for (auto& gizmo: m_gizmos) {
         auto primTransform = NauUsdPrimUtils::worldPrimTransform(selection.back());
         const nau::math::mat4 transform = NauUsdEditorMathUtils::gfMatrixToNauMatrix(primTransform);
         gizmo->activate(transform);
@@ -179,9 +182,25 @@ void NauObjectTools::onSelectionChanged(const NauUsdPrimsSelection& selection)
 void NauObjectTools::createObjectGizoms(const pxr::UsdPrim& prim)
 {
     constexpr std::string_view CAMERA_TYPE = "nau::scene::CameraComponent";
+    constexpr std::string_view DIRECTIONAL_LIGHT_TYPE = "nau::scene::DirectionalLightComponent";
+
     std::string typeName = getComponentTypeName(prim);
+
     if (typeName == CAMERA_TYPE) {
         addCameraGizmo(prim);
+        return;
+    }
+
+    if (typeName == DIRECTIONAL_LIGHT_TYPE) {
+        m_gizmos.emplace_back(std::make_unique<NauDirectionalLightGizmo>());
+    }
+
+    for (auto child: prim.GetAllChildren()) {
+        typeName = getComponentTypeName(child);
+        if (typeName == DIRECTIONAL_LIGHT_TYPE) {
+            m_gizmos.emplace_back(std::make_unique<NauDirectionalLightGizmo>());
+            break;
+        }
     }
 }
 
@@ -198,8 +217,8 @@ void NauObjectTools::addCameraGizmo(const pxr::UsdPrim& prim)
         float farValue = 1000.f;
         pxr::VtValue value;
 
-        UsdProxy::UsdProxyPrim proxyPrim{ prim };
-        for (auto&& [_, property] : proxyPrim.getProperties()) {
+        UsdProxy::UsdProxyPrim proxyPrim{prim};
+        for (auto&& [_, property]: proxyPrim.getProperties()) {
             const std::string& propertyName = property->getName().GetString();
             property->getValue(&value);
             if (propertyName == FOV_NAME) {
@@ -211,13 +230,13 @@ void NauObjectTools::addCameraGizmo(const pxr::UsdPrim& prim)
             }
         }
         pxr::GfCamera camera;
-        camera.SetClippingRange({ nearValue, farValue });
+        camera.SetClippingRange({nearValue, farValue});
         camera.SetPerspectiveFromAspectRatioAndFieldOfView(16.f / 9.f, fovValue, pxr::GfCamera::FOVHorizontal);
 
         const std::vector<pxr::GfVec3d> frustumPoints = camera.GetFrustum().ComputeCorners();
         std::vector<nau::math::Point3> frustumPointsNew;
         frustumPointsNew.reserve(frustumPoints.size());
-        for (const auto& point : frustumPoints) {
+        for (const auto& point: frustumPoints) {
             frustumPointsNew.emplace_back(point[0], point[1], point[2]);
         }
         return frustumPointsNew;

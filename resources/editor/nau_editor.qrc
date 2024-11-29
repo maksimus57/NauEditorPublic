@@ -6,6 +6,9 @@
     <qresource prefix="/UI">
         <file>icons/arrow-down.svg</file>
         <file>icons/arrow-right.svg</file>
+        <file>icons/browser/add.svg</file>
+        <file>icons/browser/import-context.svg</file>
+        <file>icons/browser/import-header.svg</file>
         <file>icons/browser/config.png</file>
         <file>icons/browser/directory.png</file>
         <file>icons/browser/editor.png</file>

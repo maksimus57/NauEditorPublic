@@ -446,7 +446,7 @@ Proceed?</source>
 <context>
     <name>NauEditorSplashScreen</name>
     <message>
-        <source>Nau Engine @2023-2024
+        <source>Nau Engine %1 2023-2024
 All rights reserved</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1513,17 +1513,6 @@ All rights reserved</source>
     </message>
 </context>
 <context>
-    <name>NauSceneCameraSettingsWidget</name>
-    <message>
-        <source>Preset</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Default</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>NauSceneCameraTransformSettings</name>
     <message>
         <source>Position</source>
@@ -1542,14 +1531,6 @@ All rights reserved</source>
     </message>
     <message>
         <source>Max</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>View</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Perspective</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1585,6 +1566,10 @@ All rights reserved</source>
     </message>
     <message>
         <source>Set transform tools space coordinates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera settings</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1934,6 +1919,10 @@ All rights reserved</source>
     </message>
     <message>
         <source>Select All</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

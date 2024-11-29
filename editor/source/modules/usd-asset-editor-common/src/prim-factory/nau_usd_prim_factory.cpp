@@ -42,7 +42,7 @@ NauUsdPrimFactory& NauUsdPrimFactory::instance()
     return instance;
 }
 
-void NauUsdPrimFactory::addCreator(const std::string& primType, NauUsdPrimCreatorAbstractPtr creator)
+void NauUsdPrimFactory::addCreator(const std::string& primType, NauUsdPrimCreatorAbstractPtr creator, const std::string& displayName)
 {
     if (primType.empty()) {
         NED_ERROR("Usd prim factory: trying to add creator for empty type.");
@@ -54,7 +54,10 @@ void NauUsdPrimFactory::addCreator(const std::string& primType, NauUsdPrimCreato
         return;
     }
 
+    std::string resultDisplayName = !displayName.empty() ? displayName : primType;
+    m_typesDisplayNames[primType] = resultDisplayName;
     m_creators[primType] = creator;
+
 }
 
 pxr::UsdPrim NauUsdPrimFactory::createPrim(pxr::UsdStageWeakPtr stage, const pxr::SdfPath& path, const pxr::TfToken& typeName,
@@ -75,13 +78,12 @@ std::vector<std::string> NauUsdPrimFactory::registeredAllPrimCreators() const
     return types;
 }
 
-std::vector<std::string> NauUsdPrimFactory::registeredPrimCreators(primFilter filter) const
+std::map<std::string, std::string> NauUsdPrimFactory::registeredPrimCreatorsWithDisplayNames(primFilter filter) const
 {
-    std::vector<std::string> types;
-
-    for (const auto& resourceType : m_creators) {
+    std::map<std::string, std::string> types;
+    for (const auto& resourceType : m_typesDisplayNames) {
         if (filter(resourceType.first)) {
-            types.push_back(resourceType.first);
+            types[resourceType.first] = resourceType.second;
         }
     }
 

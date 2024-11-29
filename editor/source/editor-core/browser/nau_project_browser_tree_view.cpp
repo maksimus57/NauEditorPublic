@@ -31,11 +31,11 @@ void NauProjectBrowserTreeView::contextMenuEvent(QContextMenuEvent* event)
         emit eventContextMenuRequestedOnEmptySpace();
     }
 
-    QMenu menu;
+    NauMenu menu;
 
-    menu.addActions(m_fileOperationMenu->enumerateActionsFor(this));
+    m_fileOperationMenu->enumerateActionsFor(this, menu);
 
-    menu.exec(event->globalPos());
+    menu.base()->exec(event->globalPos());
 }
 
 void NauProjectBrowserTreeView::paintEvent(QPaintEvent* event)

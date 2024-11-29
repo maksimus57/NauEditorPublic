@@ -26,11 +26,8 @@ void NauPlayCommands::startPlay()
     auto& sceneEditor = Nau::EditorServiceProvider().get<NauSceneEditorInterface>();
     sceneEditor.sceneManager()->saveCurrentScene();
 
-    // Reimport scene
-    Nau::Editor().assetManager()->importAsset(sceneEditor.sceneManager()->currentScenePath());
-
-    // Disable editor camera
-    Nau::EditorEngine().cameraManager()->activeCamera()->setCameraName("");
+    // Reimport project
+    Nau::Editor().assetManager()->importAsset("");
 
     // Change engine mode
     Nau::EditorEngine().startPlay();

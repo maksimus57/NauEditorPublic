@@ -58,6 +58,24 @@ namespace nau
             FindComponentsForObject(sceneObject, components...);
         }
     }
+
+    static std::string GetPrimPathFromAssetPath(const std::string& assetPath)
+    {
+        constexpr size_t EXT_SIZE = 5; // ".usda"
+
+        auto beginIt = std::find_if(assetPath.rbegin(), assetPath.rend(), [](char c) noexcept {
+            return (c == '/') || (c == '\\');
+        });
+        const size_t beginIndex = beginIt.base() - assetPath.begin();
+        std::string primPath = std::string("/") + assetPath.substr(beginIndex, assetPath.size() - beginIndex - EXT_SIZE);
+
+        auto it = std::remove_if(primPath.begin(), primPath.end(), [](char& c) {
+            return (c == '(') || (c == ')');
+        });
+        primPath.erase(it, primPath.end());
+
+        return primPath;
+    }
 }
 
 // ** NauAnimationClipEditor
@@ -143,7 +161,7 @@ void NauAnimationClipEditor::postInitialize()
         setAnimationState(AnimationState::Stop);
     });
     connect(m_timelineWindow.get(), &NauTimelineWindow::eventCreateControllerButtonPressed, [this]() { 
-        createClipAsset();
+        createClipAssetFromDialog();
     });
     connect(m_timelineWindow.get(), &NauTimelineWindow::eventManualTimeChanged, [this](float time) {
         setControllerComponentTime(time);
@@ -180,12 +198,7 @@ void NauAnimationClipEditor::preTerminate()
 
 void NauAnimationClipEditor::createAsset(const std::string& assetPath)
 {
-    m_assetStage = pxr::UsdStage::CreateNew(assetPath);
-
-    const QString fileName = QFileInfo{ assetPath.c_str() }.baseName();
-    const pxr::SdfPath primPath{ std::string("/") + fileName.toUtf8().constData() };
-    auto&& clipPrim = m_assetStage->DefinePrim(primPath, pxr::UsdTokens.Get()->AnimationClip);
-    m_assetStage->Save();
+    createClipAsset(assetPath);
 }
 
 bool NauAnimationClipEditor::openAsset(const std::string& assetPath)
@@ -362,7 +375,8 @@ void NauAnimationClipEditor::loadPathList()
     const auto* customTokens = pxr::UsdTokens.Get();
     const auto* skeletonTokens = pxr::UsdSkelTokens.Get();
 
-    auto&& uid = nau::Uid::parseString(assetPath.GetAssetPath());
+    const std::string_view assetPathStr = assetPath.GetAssetPath();
+    auto&& uid = nau::Uid::parseString(assetPathStr.starts_with("uid:") ? assetPathStr.substr(4) : assetPathStr);
     if (uid.isError()) {
         return;
     }
@@ -596,23 +610,30 @@ void NauAnimationClipEditor::setAnimationState(AnimationState state)
     auto* controller = m_controllerPtr->getController();
     for (int trackIndex = 0; trackIndex < controller->getAnimationInstancesCount(); ++trackIndex) {
         if (auto* animInstance = controller->getAnimationInstanceAt(trackIndex)) {
-            switch (state) {
-            case AnimationState::Play:
-                animInstance->getPlayer()->play();
-                break;
-            case AnimationState::Pause:
-                animInstance->getPlayer()->pause(true);
-                break;
-            case AnimationState::Stop:
-                animInstance->getPlayer()->stop();
-                break;
+            if (!animInstance->getPlayer()) {
+                animInstance->load();
+            }
+
+            if (auto* player = animInstance->getPlayer()) {
+                switch (state) {
+                case AnimationState::Play:
+                    player->play();
+                    break;
+                case AnimationState::Pause:
+                    player->pause(true);
+                    break;
+                case AnimationState::Stop:
+                    player->stop();
+                    break;
+                }
             }
         }
     }
     m_animationState = state;
+    m_controllerPtr->updateComponent(.0f);
 }
 
-void NauAnimationClipEditor::createClipAsset()
+void NauAnimationClipEditor::createClipAssetFromDialog()
 {
     if (!m_selectedPrim) {
         return;
@@ -633,28 +654,30 @@ void NauAnimationClipEditor::createClipAsset()
     if (filePath.isEmpty()) {
         return;
     }
-
     const std::string assetPath = filePath.toUtf8().constData();
-    m_assetStage = pxr::UsdStage::CreateNew(assetPath);
-    if (m_assetStage == nullptr) {
+    if (createClipAsset(assetPath)) {
+        const std::string primPath = nau::GetPrimPathFromAssetPath(assetPath);
+        addAnimationAsset(assetPath, pxr::SdfPath{ primPath });
+    }
+}
+
+bool NauAnimationClipEditor::createClipAsset(const std::string& assetPath)
+{
+    auto&& assetStage = pxr::UsdStage::CreateNew(assetPath);
+    if (assetStage == nullptr) {
         NED_ERROR("Failed to create animation clip asset.");
-        return;
+        return false;
     }
 
-    std::string primPathStr = std::string("/") + QFileInfo{ filePath }.baseName().toUtf8().constData();
-    std::for_each(primPathStr.begin(), primPathStr.end(), [](char& c) {
-        if (c == '(' || c == ')') {
-            c = '_';
-        }
-    });
+    const std::string primPathStr = nau::GetPrimPathFromAssetPath(assetPath);
     const pxr::SdfPath primPath{ primPathStr };
-    if (auto&& animationPrim = pxr::UsdNauAnimationClip::Define(m_assetStage, primPath)) {
-        m_assetStage->Save();
-        addAnimationAsset(assetPath, animationPrim.GetPath());
-        return;
+    if (auto&& animationPrim = pxr::UsdNauAnimationClip::Define(assetStage, primPath)) {
+        assetStage->Save();
+        return true;
     }
 
     NED_ERROR("Failed to create animation clip prim.");
+    return false;
 }
 
 void NauAnimationClipEditor::updateControllerPrim()
@@ -750,9 +773,8 @@ void NauAnimationClipEditor::addAnimationAsset(const std::string& assetPath, con
     const auto& primPathStr = primPath.GetString();
     pxr::UsdNauAnimationController controller{ m_controllerPrim };
     std::string sourceTrackAssetPath = std::format(
-        "{}+[kfanimation:{}]", 
-        !assetPath.empty() ? nau::FileSystemExtensions::getRelativeAssetPath(assetPath).string() : std::string{},
-        primPathStr.substr(1)
+        "{}+[kfanimation]", 
+        !assetPath.empty() ? nau::FileSystemExtensions::getRelativeAssetPath(assetPath).string() : std::string{}
     );
 
     controller.CreateAnimationAssetAttr().Set(pxr::SdfAssetPath{ sourceTrackAssetPath });
